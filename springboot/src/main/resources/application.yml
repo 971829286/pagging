@@ -1,0 +1,28 @@
+# server
+server:
+  port: 8086
+  servlet:
+    context-path:
+
+# spring
+spring:
+  ## 数据源
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/interview?useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+  ## 彩色日志
+  output:
+    ansi:
+      enabled: always
+# jpa
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+# mybatis
+mybatis:
+  type-aliases-package: com.springboot.domian
+  mapper-locations: mybatis/mapper/*.xml

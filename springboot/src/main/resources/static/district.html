@@ -1,0 +1,160 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>laypage 分页</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="lib/layui/css/layui.css">
+</head>
+
+<body>
+<div class="layui-container" style="margin-top: 50px">
+    <form class="layui-form">
+        <div class="layui-form-item">
+            <!-- 查询条件 -->
+            <div class="layui-inline">
+                <label class="layui-form-label" style="display: none">查询条件：</label>
+                <div class="layui-input-inline">
+                    <input type="text" placeholder="请输入关键字..." class="layui-input" id="name">
+                </div>
+            </div>
+            <!-- 题目 -->
+            <!-- 提交按钮 -->
+            <div class="layui-inline">
+                <div class="layui-input-inline">
+                    <button type="button" class="layui-btn" style="margin-bottom: 4px"
+                            onclick="getInfoToPage()">查询
+                    </button>
+                </div>
+            </div>
+            <!-- 提交按钮 -->
+        </div>
+    </form>
+    <table class="layui-table">
+        <thead>
+        <tr>
+            <th>did</th>
+            <th>dname</th>
+            <th>cname</th>
+            <th>pname</th>
+            <th>postcode</th>
+            <th>areacode</th>
+            <th>orderid</th>
+        </tr>
+        </thead>
+        <!--分页数据盛放器-->
+        <tbody></tbody>
+        <!---------------->
+    </table>
+    <!--分页容器-->
+    <div id="page" style="text-align:right"></div>
+    <!----------->
+</div>
+
+<script src="js/jquery.2.1.4.min.js"></script>
+<script src="lib/layui/layui.js"></script>
+<script>
+    let page = 1;                   // 当前页数，初始值设为 1
+    let size = 10;                  // 每页条数，初始值设为 10
+    let total;                      // 总记录数
+
+    $(window).on('load', () => {
+        // 初始化加载数据
+        getInfoToPage();
+    });
+
+    function getInfoToPage() {
+        getInfo();  // 获取数据
+        toPage();   // 进行分页
+    }
+
+    // 查询脚本
+    function getInfo() {
+        $.ajax({
+            type: "post",
+            url: "/api/find.do",
+            async: false,// 设置同步请求，加载数据前锁定浏览器
+            dataType: 'json',
+            data: {
+                "name": $('#name').val(),   // 查询关键字
+                "page": page,               // 查询页码
+                "size": size,               // 每页条数
+            },
+            success: (data) => {
+                // 当前查询无数据时
+                if (data.code == 400) {
+                    $("tbody").html("<tr style='color: red;text-align: center'><td colspan='7'>查无数据！</td></tr>");
+                    return;
+                }
+
+                // 1.清空原数据
+                $("tbody").html("");
+
+                // 2.重新赋值页码、条数、总记录数
+                page = data.result.page;
+                size = data.result.size;
+                total = data.result.total;
+
+                // 3.渲染数据
+                let text = ``;
+                $.each(data.result.list, (i, item) => {
+                    text += `
+                    <tr>
+                        <th>${item.did}</th>
+                        <th>${item.dname}</th>
+                        <th>${item.city.cname}</th>
+                        <th>${item.city.province.pname}</th>
+                        <th>${item.postcode}</th>
+                        <th>${item.city.areacode}</th>
+                        <th>${item.city.province.orderid}</th>
+                    </tr>
+                     `;
+                });
+                $("tbody").html(text);
+            }
+        });
+    }
+
+    // 分页脚本
+    function toPage() {
+        layui.use('laypage', function () {
+            let laypage = layui.laypage;
+            // 调用分页
+            laypage.render({
+                // 分页容器的id
+                elem: 'page',// *必选参数
+                // 数据总数，从服务端得到
+                count: total,// *必选参数
+                // 每页显示的条数。laypage将会借助 count 和 limit 计算出分页数。
+                //limit:limit,
+                // 起始页
+                //curr:page,
+                // 连续出现的页码个数
+                //groups:5,
+                // 自定义每页条数的选择项
+                limits: [10, 25, 50, 100],
+                // 自定义首页、尾页、上一页、下一页文本
+                first: '首页',
+                last: '尾页',
+                prev: '<em>&lt;&lt;</em>',
+                next: '<em>&gt;&gt;</em>',
+                // 自定义主题
+                theme: "#FF5722",
+                // 自定义排版
+                layout: ['count', 'prev', 'page', 'next', 'limit', 'skip'],
+                // 渲染数据
+                jump: function (data, first) {
+                    // data包含了当前分页的所有参数
+                    page = data.curr;
+                    size = data.limit;
+                    getInfo();
+                }
+            });
+        })
+    }
+</script>
+</body>
+</html>

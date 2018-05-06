@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.springboot.mapper.DistrictMapper">
+    <resultMap id="result-district" type="District">
+        <id property="did" column="did"/>
+        <result property="dname" column="dname"/>
+        <result property="postcode" column="postcode"/>
+
+        <association property="city" javaType="City">
+            <id property="cid" column="cid"/>
+            <result property="cname" column="cname"/>
+            <result property="areacode" column="areacode"/>
+
+            <association property="province" javaType="Province">
+                <id property="pid" column="pid"/>
+                <result property="pname" column="pname"/>
+                <result property="orderid" column="orderid"/>
+            </association>
+        </association>
+    </resultMap>
+
+    <select id="find" resultMap="result-district">
+        SELECT did,dname,postcode,cid,cname,areacode,pid,pname,orderid
+        FROM district d
+        LEFT JOIN
+        (SELECT cid,cname,areacode,pid,pname,orderid
+        FROM city c
+        JOIN province p
+        ON c.province_id = p.pid) t
+        ON d.city_id = t.cid
+        <where>
+            1 = 1
+            <if test="name != null and name != ''">
+                and concat(dname,cname,pname) like concat('%',#{name},'%')
+            </if>
+        </where>
+        LIMIT #{page},#{size}
+    </select>
+
+    <select id="getTotal" resultType="Long">
+        SELECT count(*)
+        FROM district d
+        LEFT JOIN
+        (SELECT cid,cname,areacode,pid,pname,orderid
+        FROM city c
+        JOIN province p
+        ON c.province_id = p.pid) t
+        ON d.city_id = t.cid
+        <where>
+            1 = 1
+            <if test="name != null and name != ''">
+                and concat(dname,cname,pname) like concat('%',#{name},'%')
+            </if>
+        </where>
+    </select>
+</mapper>
